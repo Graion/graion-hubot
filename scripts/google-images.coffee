@@ -21,13 +21,15 @@ module.exports = (robot) ->
     mustachify = "http://mustachify.me/#{type}?src="
     imagery = msg.match[1]
 
-    msg.send "I don't want to moustache anyone else. Stop moustaching innocent people."
+    if Math.random() > 0.7
+      if imagery.match /^https?:\/\//i
+        msg.send "You're lucky... #{mustachify}#{encodeURIComponent imagery}"
+      else
+        imageMe msg, imagery, false, true, (url) ->
+          msg.send "You're lucky... #{mustachify}#{encodeURIComponent url}"
+    else
+      msg.send "I don't want to moustache anyone else. Stop moustaching innocent people."
 
-    # if imagery.match /^https?:\/\//i
-    #   msg.send "#{mustachify}#{encodeURIComponent imagery}"
-    # else
-    #   imageMe msg, imagery, false, true, (url) ->
-    #     msg.send "#{mustachify}#{encodeURIComponent url}"
 
 imageMe = (msg, query, animated, faces, cb) ->
   cb = animated if typeof animated == 'function'
