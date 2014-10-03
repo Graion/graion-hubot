@@ -15,6 +15,7 @@
 
 
 https = require('https')
+querystring = require('querystring')
 
 options =
   hostname: 'https://numbersapi.p.mashape.com'
@@ -23,13 +24,15 @@ options =
 
 module.exports = (robot) ->
   robot.hear /(random )?fact(s)? (.*)/i, (msg) ->
-    data = if msg.match[3] then msg.match[3].split(' ') else []
-    day = data[0] || Math.floor(Math.random() * 31)
-    month = data[1] || Math.floor(Math.random() * 12)
+    args = if msg.match[3] then msg.match[3].split(' ') else []
+    day = args[0] || Math.floor(Math.random() * 31)
+    month = args[1] || Math.floor(Math.random() * 12)
     options.path = "/#{month}/#{day}/date"
-    console.log(msg.match)
-    console.log(data)
-    console.log(day, month)
+    query =
+      fragment: true
+      json: true
+    options.hostname += '?' + querystring.stringify(query)
+    console.log(options.hostname)
     msg.send(options.path)
 
     # https.get(options, (res) ->
