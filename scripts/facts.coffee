@@ -8,42 +8,40 @@
 #   HUBOT_MASHAPE_CLIENT_ID
 #
 # Commands:
-#   fact <day> <month>
+#   fact (<day> <month> | today | random) - Show a historic fact
 #
 # Author:
 #   aaccurso
 
-
-https = require('https')
-querystring = require('querystring')
-
-options =
-  hostname: 'https://numbersapi.p.mashape.com'
-  headers:
-    'X-Mashape-Key': "#{process.env.HUBOT_MASHAPE_CLIENT_ID}"
+hostname ='https://numbersapi.p.mashape.com'
 
 module.exports = (robot) ->
   robot.hear /(random )?fact(s)? (.*)/i, (msg) ->
     args = if msg.match[3] then msg.match[3].split(' ') else []
-    day = args[0] || Math.floor(Math.random() * 31)
-    month = args[1] || Math.floor(Math.random() * 12)
-    options.path = "/#{month}/#{day}/date"
-    query =
-      fragment: true
-      json: true
-    options.hostname += '?' + querystring.stringify(query)
-    console.log(options.hostname)
-    msg.send(options.path)
+    fst = args[0]
+    snd = args[1]
+    if fst == 'today'
+      today = new Date()
+      day = today.getDate()
+      month = today.getMonth() + 1
+    else if fst == 'random' || !(fst && snd)
+      day = Math.floor(Math.random() * 31)
+      month = Math.floor(Math.random() * 12)
+    else
+      day = fst
+      month = snd
+    path = "/#{month}/#{day}/date"
 
-    # https.get(options, (res) ->
-    #   if res.statusCode == 200
-    #     res.on 'data', (chunk) ->
-    #       data.push(chunk)
-    #
-    #     res.on 'end', () ->
-    #       parsedData = JSON.parse(data.join(''))
-    #       images = parsedData.data.images
-    #       image = images[parseInt(Math.random() * images.length)]
-    #
-    #       msg.send(image.link)
-    # )
+    msg.http(hostname + path)
+      .query({
+        fragment: true
+        json: true
+      })
+      .header('X-Mashape-Key', "#{process.env.HUBOT_MASHAPE_CLIENT_ID || 'rsaiucBvCWmshtvC6jjBvqndWLaYp1jrjxPjsnOtR7XDcmQoGs'}")
+      .get() (err, res, body) ->
+        data = JSON.parse(body)
+        console.log(data)
+        if data.found
+          intro = if fst == 'today' then 'Today on' else 'On'
+          msg.send "#{intro} #{data.year} #{data.text}"
+        else msg.send "Fact not found for #{day}/#{month}. Try again!"
